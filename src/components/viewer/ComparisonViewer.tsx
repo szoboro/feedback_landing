@@ -111,11 +111,9 @@ export function ComparisonViewer({
             feedbackUrl={feedbackImageUrl}
             position={viewer.sliderPosition}
             transformStyle={transformStyle}
-            aspect={aspect}
             pins={diagnosisPins}
             areaComments={areaComments}
             onSliderDown={() => setIsDraggingSlider(true)}
-            onClick={handleSliderInteraction}
             width={originalWidth}
             height={originalHeight}
           />
@@ -153,18 +151,16 @@ export function ComparisonViewer({
 // ─── Slider Mode ─────────────────────────────────────────
 
 function SliderView({
-  originalUrl, feedbackUrl, position, transformStyle, aspect,
-  pins, areaComments, onSliderDown, onClick, width, height,
+  originalUrl, feedbackUrl, position, transformStyle,
+  pins, areaComments, onSliderDown, width, height,
 }: {
   originalUrl: string;
   feedbackUrl: string | null;
   position: number;
   transformStyle: React.CSSProperties;
-  aspect: string;
   pins: DiagnosisPin[];
   areaComments: AreaComment[];
   onSliderDown: () => void;
-  onClick: (e: React.MouseEvent) => void;
   width: number;
   height: number;
 }) {

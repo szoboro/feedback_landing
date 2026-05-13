@@ -2,6 +2,7 @@
 
 import { SelfDiagnosisForm } from '@/components/upload/SelfDiagnosisForm';
 import { useRouter } from 'next/navigation';
+import type { ConcernCategory, DiagnosisPin } from '@/types';
 
 export default function NewSubmissionPage({ params }: { params: { sessionId: string } }) {
   const router = useRouter();
@@ -9,7 +10,13 @@ export default function NewSubmissionPage({ params }: { params: { sessionId: str
   // 목업용 임시 이미지 URL
   const MOCK_ORIGINAL_IMAGE = 'https://picsum.photos/id/25/1200/800';
 
-  const handleSubmit = (data: any) => {
+  const handleSubmit = (data: {
+    title: string;
+    description: string;
+    concernCategories: ConcernCategory[];
+    diagnosisPins: DiagnosisPin[];
+    selfNote: string;
+  }) => {
     console.log('Submitted Diagnosis Data:', data);
     alert('진단 신청이 완료되었습니다! 뷰어 페이지로 이동합니다.');
     

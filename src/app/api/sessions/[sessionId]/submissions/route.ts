@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+export const dynamic = 'force-dynamic';
 import { prisma } from '@/lib/db';
 import { createSubmissionSchema, sessionIdParam, paginationSchema } from '@/lib/validators';
 import {

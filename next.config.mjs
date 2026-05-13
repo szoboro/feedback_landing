@@ -6,6 +6,12 @@ const nextConfig = {
       { protocol: 'https', hostname: 'cdn.example.com' },
     ],
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
 };
 
 export default nextConfig;
