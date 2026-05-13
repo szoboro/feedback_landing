@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Users (성장 스코어 메타데이터 포함) ─────────────────
+
+model User {
+  id        String  @id @default(uuid()) @db.Uuid
+  nickname  String  @db.VarChar(50)
+  email     String  @unique @db.VarChar(255)
+  avatarUrl String? @map("avatar_url")
+  role      String  @default("VIEWER") @db.VarChar(20)
+
+  // ── Growth Score Metadata ──
+  totalSubmissions           Int      @default(0) @map("total_submissions")
+  totalPrescriptionsReceived Int      @default(0) @map("total_prescriptions_received")
+  avgAnatomyScore            Decimal? @map("avg_anatomy_score") @db.Decimal(3, 1)
+  avgColoringScore           Decimal? @map("avg_coloring_score") @db.Decimal(3, 1)
+  avgCompositionScore        Decimal? @map("avg_composition_score") @db.Decimal(3, 1)
+  avgLineQualityScore        Decimal? @map("avg_line_quality_score") @db.Decimal(3, 1)
+  avgCreativityScore         Decimal? @map("avg_creativity_score") @db.Decimal(3, 1)
+  latestOverallScore         Decimal? @map("latest_overall_score") @db.Decimal(3, 1)
+  growthRate                 Decimal? @map("growth_rate") @db.Decimal(5, 2)
+
+  // ── Reputation & Badges ──
+  reputationPoints Int      @default(0) @map("reputation_points")
+  verifiedBadge    String?  @map("verified_badge") @db.VarChar(20)
+  earnedTitles     String[] @map("earned_titles")
+  equippedTitles   String[] @map("equipped_titles")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  sessions       Session[]
+  submissions    Submission[]
+  prescriptions  Prescription[]
+  expertComments ExpertComment[]
+
+  @@map("users")
+}
+
+// ─── Sessions (피드백 방) ────────────────────────────────
+
+model Session {
+  id             String    @id @default(uuid()) @db.Uuid
+  hostId         String    @map("host_id") @db.Uuid
+  title          String    @db.VarChar(120)
+  description    String?
+  status         String    @default("DRAFT") @db.VarChar(20)
+  maxSubmissions Int       @default(30) @map("max_submissions")
+  openedAt       DateTime? @map("opened_at") @db.Timestamptz()
+  closedAt       DateTime? @map("closed_at") @db.Timestamptz()
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  host        User         @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  submissions Submission[]
+
+  @@index([hostId])
+  @@index([status])
+  @@map("sessions")
+}
+
+// ─── Submissions (신청 그림 + 자가 진단) ─────────────────
+
+model Submission {
+  id               String  @id @default(uuid()) @db.Uuid
+  sessionId        String  @map("session_id") @db.Uuid
+  submitterId      String  @map("submitter_id") @db.Uuid
+  originalImageUrl String  @map("original_image_url")
+  originalImageKey String  @map("original_image_key")
+  title            String  @db.VarChar(120)
+  description      String?
+
+  // ── Self-Diagnosis (자가 진단) ──
+  concernCategories String[] @map("concern_categories") @db.VarChar(30)
+  diagnosisPins     Json     @default("[]") @map("diagnosis_pins") @db.JsonB
+  selfNote          String?  @map("self_note")
+
+  status        String   @default("WAITING") @db.VarChar(20)
+  queuePosition Int      @default(0) @map("queue_position")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  session       Session        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  submitter     User           @relation(fields: [submitterId], references: [id], onDelete: Cascade)
+  prescriptions Prescription[]
+
+  @@index([sessionId])
+  @@index([submitterId])
+  @@index([queuePosition])
+  @@map("submissions")
+}
+
+// ─── Prescriptions (스트리머 처방전) ─────────────────────
+
+model Prescription {
+  id               String  @id @default(uuid()) @db.Uuid
+  submissionId     String  @map("submission_id") @db.Uuid
+  reviewerId       String  @map("reviewer_id") @db.Uuid
+  feedbackImageUrl String? @map("feedback_image_url")
+  feedbackImageKey String? @map("feedback_image_key")
+  version          Int     @default(1)
+
+  // ── Scoring (1–10) ──
+  anatomyScore     Int @map("anatomy_score") @db.SmallInt
+  coloringScore    Int @map("coloring_score") @db.SmallInt
+  compositionScore Int @map("composition_score") @db.SmallInt
+  lineQualityScore Int @map("line_quality_score") @db.SmallInt
+  creativityScore  Int @map("creativity_score") @db.SmallInt
+
+  overallComment String? @map("overall_comment")
+  areaComments   Json    @default("[]") @map("area_comments") @db.JsonB
+  isFinal        Boolean @default(false) @map("is_final")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  submission     Submission      @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  reviewer       User            @relation(fields: [reviewerId], references: [id], onDelete: Cascade)
+  expertComments ExpertComment[]
+
+  @@index([submissionId])
+  @@index([reviewerId])
+  @@map("prescriptions")
+}
+
+// ─── Expert Comments (커뮤니티 고수 소견) ─────────────────
+
+model ExpertComment {
+  id             String  @id @default(uuid()) @db.Uuid
+  prescriptionId String  @map("prescription_id") @db.Uuid
+  authorId       String  @map("author_id") @db.Uuid
+  content        String  @db.Text
+  likes          Int     @default(0)
+  isAccepted     Boolean @default(false) @map("is_accepted")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  author       User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([prescriptionId])
+  @@index([authorId])
+  @@map("expert_comments")
+}
