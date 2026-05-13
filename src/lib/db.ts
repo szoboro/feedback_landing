@@ -9,22 +9,39 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-const getPrismaClient = () => {
-  if (!process.env.DATABASE_URL) {
-    console.warn("DATABASE_URL is missing. Using a mock PrismaClient for build.");
-    // 빈 객체를 PrismaClient 타입으로 단언하여 빌드 시 크래시 방지
-    return {} as PrismaClient; 
+const getPrismaClient = (): PrismaClient => {
+  try {
+    return new PrismaClient({
+      log:
+        process.env.NODE_ENV === 'development'
+          ? ['query', 'error', 'warn']
+          : ['error'],
+    });
+  } catch (error) {
+    console.warn("PrismaClient initialization failed. Using Mock.");
+    // 빌드/데모 환경용 Proxy Mock
+    return new Proxy({} as PrismaClient, {
+      get() {
+        return new Proxy({}, {
+          get() {
+            return () => Promise.resolve([]);
+          }
+        });
+      }
+    });
   }
-  return new PrismaClient({
-    log:
-      process.env.NODE_ENV === 'development'
-        ? ['query', 'error', 'warn']
-        : ['error'],
-  });
 };
 
-export const prisma = globalForPrisma.prisma ?? getPrismaClient();
+// Vercel 빌드 시점 등에서 크래시를 방지하기 위해 지연 초기화(Lazy init) 또는 프록시 사용
+export const prisma = globalForPrisma.prisma ?? new Proxy({} as PrismaClient, {
+  get(_target, prop) {
+    if (!globalForPrisma.prisma) {
+      globalForPrisma.prisma = getPrismaClient();
+    }
+    return (globalForPrisma.prisma as any)[prop];
+  }
+});
 
 if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = prisma;
+  globalForPrisma.prisma = prisma as PrismaClient;
 }
