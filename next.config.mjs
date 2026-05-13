@@ -1,10 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export',
+  basePath: '/feedback_landing',
   images: {
-    remotePatterns: [
-      { protocol: 'https', hostname: 'picsum.photos' },
-      { protocol: 'https', hostname: 'cdn.example.com' },
-    ],
+    unoptimized: true,
   },
   eslint: {
     ignoreDuringBuilds: true,

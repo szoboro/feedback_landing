@@ -9,6 +9,10 @@ import type { Submission } from '@/types';
  * 피드백 비교 뷰어 페이지
  * 신청자의 원본 그림과 스트리머의 피드백 그림을 비교합니다.
  */
+export function generateStaticParams() {
+  return [{ sessionId: 'test-session', submissionId: 'test-sub' }];
+}
+
 export default function FeedbackViewerPage({
   params,
 }: {

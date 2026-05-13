@@ -7,6 +7,10 @@ import type { Submission, Prescription, ExpertComment } from '@/types';
  * 처방전 리포트 페이지
  * /sessions/:sessionId/submissions/:submissionId/report
  */
+export function generateStaticParams() {
+  return [{ sessionId: 'test-session', submissionId: 'test-sub' }];
+}
+
 export default function ReportPage({
   params,
 }: {

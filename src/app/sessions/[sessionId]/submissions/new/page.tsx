@@ -4,6 +4,10 @@ import { SelfDiagnosisForm } from '@/components/upload/SelfDiagnosisForm';
 import { useRouter } from 'next/navigation';
 import type { ConcernCategory, DiagnosisPin } from '@/types';
 
+export function generateStaticParams() {
+  return [{ sessionId: 'test-session' }];
+}
+
 export default function NewSubmissionPage({ params }: { params: { sessionId: string } }) {
   const router = useRouter();
   
